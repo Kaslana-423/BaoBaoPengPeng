@@ -1,0 +1,21 @@
+辅助瞄准线修改验证
+Unity 版本：2022.3.50f1c1
+方式：在隔离临时项目中，用本机安装的 Unity 编译并执行真实 PhysicsScene2D 查询。
+
+PASS：无障碍时路径遵守总长度预算，排除发射角色自身。
+PASS：超出长度上限的障碍不会触发反弹。
+PASS：墙面碰撞计算角色半径，并只显示一次反弹。
+PASS：初始段与反弹段共用长度预算。
+PASS：反弹段在第二个障碍前停止，无第二次反弹后的线段。
+PASS：圆形角色擦边碰撞的反射方向。
+PASS：过滤 Trigger、未选中的障碍层、IgnoreCollision 碰撞对。
+PASS：贴墙时朝远离墙面的方向瞄准不误判；朝向墙面可显示反弹。
+PASS：实际 SC_Battle 场景渲染角色反弹和墙面反弹预览图，已目视核对浅色虚线及折线路径。
+PASS：Hide 隐藏预览。
+
+最终日志：
+TUANZI_AIM_CHECKS_PASSED
+TUANZI_AIM_RENDER_PASSED
+Application will terminate with return code 0
+
+鼠标交互及操作手感仍需在 Game 窗口进入 Play 后验收。

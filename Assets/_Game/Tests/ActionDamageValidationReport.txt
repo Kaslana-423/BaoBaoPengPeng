@@ -1,0 +1,24 @@
+行动方单向伤害与墙角连撞验证
+引擎：Unity 2022.3.50f1c1
+方式：隔离临时项目编译、编辑模式逻辑检查与真实 Play 模式物理碰撞。
+
+PASS：我方行动期间，任意我方球与敌方球接触时只扣敌方血。
+PASS：敌方行动期间对称处理，只扣我方血。
+PASS：碰撞者不必是原始弹射角色；行动方由发射成功时的阵营快照决定。
+PASS：原始弹射角色中途击倒，不改变该次行动的伤害归属。
+PASS：双方内部碰撞均无伤害。
+PASS：低速接触仍可造成伤害，速度不决定受伤阵营。
+PASS：同次接触的双回调及持续接触去重。
+PASS：真正分离再接触立即再次伤害，没有 0.25 秒时间冷却。
+PASS：换行动后重置接触记录，允许已贴住的角色结算新行动的首次接触。
+PASS：真实物理墙角反弹测试，我方行动时两次撞击间隔 0.06 秒，敌方 500 -> 460，我方保持 500。
+PASS：真实物理墙角反弹测试，敌方行动时两次撞击间隔 0.06 秒，我方 500 -> 460，敌方保持 500。
+PASS：血量 UI 随事件更新，击倒只触发一次，击倒后物理和操作资格关闭。
+
+最终日志：
+TUANZI_COMBAT_CHECKS_PASSED
+TUANZI_WALL_COMBO_PASSED: acting=Player, selfHP=500, defendingHP=460, impacts=2, interval=0.06
+TUANZI_WALL_COMBO_PASSED: acting=Enemy, selfHP=500, defendingHP=460, impacts=2, interval=0.06
+TUANZI_ACTION_DAMAGE_PLAY_PASSED
+
+本次修改：CollisionDamageSystem.cs、UnitCollisionReporter.cs、PrototypeSession.cs、CombatChecks.cs，以及属性说明文档。

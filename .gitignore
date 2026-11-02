@@ -1,0 +1,49 @@
+# Unity-generated caches and local editor state
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Build output
+/[Bb]uild/
+/[Bb]uilds/
+
+# IDE caches and personal settings
+/.vs/
+/.idea/
+/.vscode/
+/.gradle/
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.opendb
+*.VC.db
+
+# Unity-generated solution and project files
+/*.csproj
+/*.sln
+/*.slnx
+/*.sln.docstates
+/*.unityproj
+/*.booproj
+/*.svd
+/*.pdb
+/*.mdb
+
+# Crash reports and operating-system files
+/sysinfo.txt
+*.stackdump
+.DS_Store
+._*
+Thumbs.db
+Thumbs.db.meta
+Desktop.ini
+
+# Local assistant metadata
+/.codex/
+
+# Keep Assets (including .meta files), Packages, and ProjectSettings in Git.

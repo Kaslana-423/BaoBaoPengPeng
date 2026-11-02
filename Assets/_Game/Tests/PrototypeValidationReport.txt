@@ -1,0 +1,25 @@
+团子碰碰物语 — 阶段一验证记录
+日期：2026-11-02（Asia/Shanghai）
+引擎：Unity 2022.3.50f1c1
+方式：本机安装的 Unity，在隔离临时项目中编译与执行。脚本及脚本 GUID 与交付项目一致。
+
+PASS: Runtime / Editor C# 编译。
+PASS: 生成 SC_Battle.unity、PF_DangoUnit.prefab、三份 UnitData、物理材质和占位 Sprite。
+PASS: 保存场景中存在三名 Player 与三名 Enemy。
+PASS: 角色配置、Sprite、物理材质、输入控制器引用、六人列表均有效，无缺失脚本。
+PASS: 选中角色不改变刚体位置。
+PASS: 敌方不能被选中；零冲量不会进入输入锁定。
+PASS: 发射后不能重复发射。
+PASS: 在独立 PhysicsScene2D 中实际模拟碰撞，目标获得动量并移动。
+PASS: 阻尼使团子停稳，物理锁定解除，允许再次选择我方。
+PASS: Unity 渲染 1280×720 预览图，已目视确认场地、双方六名角色和阵营颜色。
+
+最终执行日志标记：
+TUANZI_SCENE_CHECKS_PASSED
+TUANZI_PHYSICS_CHECKS_PASSED
+TUANZI_RENDER_CHECK_COMPLETE
+Application will terminate with return code 0
+最终执行中无 C# 编译错误、异常或验证断言。
+
+未验收：Game 窗口实际鼠标按住、拖拽、松开、Esc/右键取消、窗口失焦和交互手感。
+这些步骤须由用户进入 Play 模式后按 README_阶段一.md 完成。

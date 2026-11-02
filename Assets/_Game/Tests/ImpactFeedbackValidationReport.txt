@@ -1,0 +1,26 @@
+强碰撞顿帧与震屏验证
+引擎：Unity 2022.3.50f1c1
+方式：本机 Unity，在隔离临时项目编译并实际进入 Play。
+
+PASS：低于触发阈值时不播放反馈。
+PASS：强碰撞启动短暂时停，并按真实时间自动恢复。
+PASS：镜头有可观测的位移，震屏衰减后回到原位置，无累计漂移。
+PASS：重复反馈不叠加延长时停。
+PASS：原时间倍率为 0.5 时，时停结束恢复 0.5。
+PASS：组件停用时清除震屏偏移；时停中停用时立即恢复原时间倍率。
+PASS：外部已经暂停时不触发反馈，也不会误解除暂停。
+PASS：窗口失焦清理可恢复时停。
+PASS：真实碰撞事件触发反馈。
+PASS：我方行动的墙角连撞仍造成两次伤害，物理间隔 0.06 秒，敌方 500 -> 460，我方 500；只播放一次反馈。
+PASS：敌方行动的墙角连撞对称处理，物理间隔 0.06 秒，我方 500 -> 460，敌方 500；只播放一次反馈。
+PASS：原有行动方伤害、血量 UI、击倒、一次反弹瞄准检查仍通过。
+
+最终日志：
+TUANZI_COMBAT_CHECKS_PASSED
+TUANZI_AIM_CHECKS_PASSED
+TUANZI_IMPACT_LIFECYCLE_PASSED
+TUANZI_IMPACT_COMBO_PASSED: team=Player, selfHP=500, targetHP=460, physicsInterval=0.06, feedbackTriggers=1
+TUANZI_IMPACT_COMBO_PASSED: team=Enemy, selfHP=500, targetHP=460, physicsInterval=0.06, feedbackTriggers=1
+TUANZI_IMPACT_PLAY_CHECKS_PASSED
+
+主观打击感仍需用户实际鼠标试玩；调参位置见 README_碰撞反馈.md。

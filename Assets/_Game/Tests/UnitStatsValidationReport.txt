@@ -1,0 +1,24 @@
+角色血量、攻击力和底部 UI 验证
+此为首次属性与 UI 验证记录；伤害归属及连撞规则已在后续修正，当前规则与验证见 README_角色属性.md 和 ActionDamageValidationReport.txt。
+引擎：Unity 2022.3.50f1c1
+方式：使用本机安装的 Unity，在隔离临时项目中编译、升级共用 Prefab、渲染场景，并实际进入 Play 模式验证。
+
+PASS：Runtime/Editor C# 编译。
+PASS：六名角色拥有两个底部 UI：黄色闪电攻击力、红色爱心当前血量，圆角深蓝底框与白色数字。
+PASS：重锤 10/65、弹力 8/45、接力 6/50 的初始数字与配置一致。
+PASS：独立实例保存当前血量，不修改共享 UnitData 或其他角色。
+PASS：参考速度下攻击力 10 造成 10 点伤害；弱接触无伤害，伤害有上限。
+PASS：友方碰撞无伤害，同一碰撞对的双向回调去重及再次接触冷却。
+PASS：实际 Play 物理弹射后，敌方重锤血量由 65 降为 60，伤害事件恰好 1 次，我方血量保持 65。
+PASS：实际碰撞受伤后 UI 与 CurrentHealth 一致。
+PASS：归零后显示 0、不可弹射、关闭物理；重复伤害不重复触发击倒。
+PASS：升级后的卡片与自绘图标渲染已目视检查，预览见 UnitStatsPreview.png。
+PASS：之前的辅助瞄准长度、一次反弹和二次障碍截断检查。
+
+最终日志标记：
+TUANZI_COMBAT_CHECKS_PASSED
+TUANZI_AIM_CHECKS_PASSED
+TUANZI_REAL_COLLISION_PASSED: target HP=60/65, damage events=1
+TUANZI_STATS_PLAY_CHECKS_PASSED
+
+未自动操作鼠标。人工操作验收步骤见 README_角色属性.md。
