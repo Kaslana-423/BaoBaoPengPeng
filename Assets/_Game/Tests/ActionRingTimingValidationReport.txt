@@ -1,0 +1,12 @@
+旋转行动圆环显示时机验证 — Unity 2022.3.50f1c1
+已在隔离临时项目编译并实际进入 Play。
+
+PASS：我方选择阶段显示三个未使用角色圆环；无效/取消发射保持显示。
+PASS：成功发射的同一调用中，圆环立即由 3 个变为 0 个。
+PASS：我方物理结算、敌方思考和敌方物理结算全过程保持隐藏。
+PASS：敌方停稳交回我方后，仅恢复两名尚未使用角色的圆环。
+PASS：已使用角色复活不恢复圆环，未使用角色在敌方阶段复活也不会提前显示。
+PASS：UI 停用后重新启用会读取当前流程状态，不会在敌方阶段误显示。
+PASS：大轮、六次行动、复活资格保持及三档 AI 逻辑检查继续通过。
+
+最终标记：TUANZI_TURN_AI_CHECKS_PASSED、TUANZI_RINGS_IMMEDIATE_HIDE_PASSED、TUANZI_RINGS_RETURN_PASSED、TUANZI_RING_TIMING_PLAY_PASSED。

@@ -1,0 +1,32 @@
+三档 AI 与回合制验证
+此为首次 AI 接入记录；当前已改为出生点复活并移除全灭结束规则，最新验证见 RespawnAndRoundValidationReport.txt。
+引擎：Unity 2022.3.50f1c1
+方式：隔离临时项目编译，编辑模式逻辑/物理检查，以及现有 SC_Battle 的实际 Play 验证。
+
+PASS：玩家先手，物理停稳后交给 AI，AI 停稳后交回玩家。
+PASS：每轮每名角色最多主动行动一次，被动移动不消耗行动资格。
+PASS：六个角色均完成后重置轮次，玩家先手。
+PASS：人数不等时跳过本轮没有行动资格的一方，无死锁。
+PASS：击倒、胜利/失败锁定；结束事件只发送一次，结束后 AI 不再发射。
+PASS：每档随机抽样 250 次，共 750 份计划，低档不超过 50%、中档不超过 60%、高档固定 100%。
+PASS：低档有角度误差，中高档直瞄当前目标中心。
+PASS：AI 仅选择存活且本轮未行动的敌方角色，目标为存活我方角色。
+PASS：思考期间通过整数 UI 接口改难度，下一次发射使用新难度。
+PASS：实际读取用户当前场景的满蓄力基础冲量 2 × 8 = 16。
+PASS：实际 Play 中三档各自动完成一轮，每轮三次我方和三次敌方行动，双方均为三个不同角色。
+PASS：原有行动方单向伤害、连续接触去重、低速伤害、血量 UI、击倒、一次反弹瞄准与物理结算检查。
+
+实际 Play 验证临时提高测试角色血量至 1000，并缩短 AI 思考延迟，确保可连续检查三个难度的完整轮次；这些测试改动没有保存回项目配置。
+
+最终日志：
+TUANZI_TURN_AI_CHECKS_PASSED
+TUANZI_COMBAT_CHECKS_PASSED
+TUANZI_AIM_CHECKS_PASSED
+TUANZI_SCENE_CHECKS_PASSED
+TUANZI_PHYSICS_CHECKS_PASSED
+TUANZI_REAL_AI_ROUND_PASSED: difficulty=Easy, launches=6, aiShots=3, sceneFullImpulse=16
+TUANZI_REAL_AI_ROUND_PASSED: difficulty=Medium, launches=6, aiShots=3, sceneFullImpulse=16
+TUANZI_REAL_AI_ROUND_PASSED: difficulty=Hard, launches=6, aiShots=3, sceneFullImpulse=16
+TUANZI_AI_PLAY_CHECKS_PASSED
+
+未自动操作鼠标。试玩步骤和 UI 接口见 README_AI与回合.md。

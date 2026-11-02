@@ -57,8 +57,14 @@ namespace TuanziArena.Editor
                     "The target did not receive physical collision momentum.");
                 Require(!session.IsResolving && player.SpeedSquared < 0.001f && enemy.SpeedSquared < 0.001f,
                     "Damping and settle detection must restore selection.");
-                Require(session.CanSelectUnit(player), "Player selection did not recover after settling.");
-                Debug.Log("TUANZI_PHYSICS_CHECKS_PASSED: selection, enemy lock, zero impulse, shot lock, collision, damping, settle recovery.");
+                Require(session.Flow.State == BattleState.AIThinking && !session.CanSelectUnit(player),
+                    "Player shot must hand off to the enemy after settling.");
+                session.Flow.SetDifficulty(AIDifficulty.Hard);
+                Require(session.TryLaunchForTeam(enemy, Vector2.left * 10f, UnitTeam.Enemy), "Enemy action must start.");
+                for (int i = 0; i < 500; i++) { physics.Simulate(Time.fixedDeltaTime); fixedTick(); }
+                Require(session.CanSelectUnit(player) && session.Flow.RoundNumber == 2,
+                    "Enemy settling must start the next player round in this one-versus-one fixture.");
+                Debug.Log("TUANZI_PHYSICS_CHECKS_PASSED: selection, shot lock, collision, damping, player/enemy settle handoff.");
             }
             finally
             {
@@ -80,7 +86,7 @@ namespace TuanziArena.Editor
 
         private static void ValidateSavedScene()
         {
-            string[] sceneGuids = AssetDatabase.FindAssets("SC_Battle t:Scene", new[] { "Assets/_Game/Scenes" });
+            string[] sceneGuids = AssetDatabase.FindAssets("SC_Battle t:Scene", new[] { "Assets" });
             Require(sceneGuids.Length > 0, "The saved prototype scene is missing.");
             string scenePath = AssetDatabase.GUIDToAssetPath(sceneGuids[0]);
             Scene previous = SceneManager.GetActiveScene();

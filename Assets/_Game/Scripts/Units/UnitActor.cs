@@ -19,8 +19,11 @@ namespace TuanziArena
         private int currentHealth;
         private bool healthInitialized;
         private Color livingColor;
+        private Vector2 spawnPosition;
+        private bool spawnRecorded;
         public event Action<UnitActor> StatsChanged;
         public event Action<UnitActor> Defeated;
+        public event Action<UnitActor> Respawned;
         public UnitData Data => data;
         public UnitTeam Team => team;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
@@ -29,10 +32,12 @@ namespace TuanziArena
         public int CurrentHealth { get { EnsureHealth(); return currentHealth; } }
         public bool IsAlive => data != null && CurrentHealth > 0;
         public bool CanLaunch => isActiveAndEnabled && Body.simulated && IsAlive;
+        public Vector2 SpawnPosition { get { RecordSpawn(); return spawnPosition; } }
 
         private void Awake()
         {
             ApplyConfiguration();
+            RecordSpawn();
             EnsureHealth();
             SetSelected(false);
         }
@@ -45,6 +50,7 @@ namespace TuanziArena
             visual = bodyVisual;
             selectionIndicator = indicator;
             ApplyConfiguration();
+            RecordSpawn();
             ResetHealth();
             SetSelected(false);
         }
@@ -54,6 +60,33 @@ namespace TuanziArena
             if (healthInitialized) return;
             currentHealth = MaxHealth;
             healthInitialized = true;
+        }
+
+        private void RecordSpawn()
+        {
+            if (spawnRecorded) return;
+            spawnPosition = transform.position;
+            spawnRecorded = true;
+        }
+
+        public void RespawnAtSpawn()
+        {
+            RecordSpawn();
+            Body.simulated = false;
+            StopMotion();
+            RigidbodyInterpolation2D interpolation = Body.interpolation;
+            Body.interpolation = RigidbodyInterpolation2D.None;
+            Body.position = spawnPosition;
+            Body.rotation = 0f;
+            // A disabled body's transform may still hold its old interpolated pose. Synchronize
+            // both while simulation is off, so re-enabling cannot overwrite the spawn position.
+            transform.SetPositionAndRotation(new Vector3(spawnPosition.x, spawnPosition.y, transform.position.z), Quaternion.identity);
+            SetSelected(false);
+            ResetHealth();
+            Body.position = spawnPosition;
+            StopMotion();
+            Body.interpolation = interpolation;
+            Respawned?.Invoke(this);
         }
 
         public void ResetHealth()

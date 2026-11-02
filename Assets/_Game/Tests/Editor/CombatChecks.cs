@@ -37,6 +37,7 @@ namespace TuanziArena.Editor
                 session.Configure(units);
                 CollisionDamageSystem damage = systems.AddComponent<CollisionDamageSystem>();
                 damage.Configure(session, units);
+                session.Respawns.Configure(units, damage);
                 Check(!damage.TryResolve(attacker, target, 4f), "No damage while idle.");
                 Check(session.TryLaunch(attacker, Vector2.right), "The test shot must start.");
                 Check(session.ActiveTeam == UnitTeam.Player, "Snapshot the acting faction at launch.");
@@ -83,7 +84,18 @@ namespace TuanziArena.Editor
                 Check(!target.TryLaunch(Vector2.right), "A defeated unit must not launch.");
                 Check(damage.TryResolve(secondEnemy, friend, 4f) && friend.CurrentHealth == 75,
                     "Other acting-team balls can hurt enemies after the original shooter is defeated.");
-                Debug.Log("TUANZI_COMBAT_CHECKS_PASSED: acting-team-only damage in both directions, non-shooting allies, immediate re-entry, persistent-contact de-duplication, low-speed contact, action reset, UI, defeat.");
+                session.Respawns.ProcessPendingRespawns();
+                session.Respawns.ProcessPendingRespawns();
+                Check(target.CurrentHealth == 100 && target.IsAlive && ui.HealthText.text == "100" &&
+                    session.Flow.Turns.HasActed(target), "Respawn restores health but not action eligibility.");
+                Check(damage.TryResolve(target, friend, 4f) && friend.CurrentHealth == 65,
+                    "A new life must not retain the previous life's contact suppression.");
+                target.TakeDamage(int.MaxValue);
+                Check(deaths == 2, "Each distinct life may emit one defeat event.");
+                session.Respawns.ProcessPendingRespawns();
+                session.Respawns.ProcessPendingRespawns();
+                Check(target.IsAlive, "Repeated defeats must continue respawning.");
+                Debug.Log("TUANZI_COMBAT_CHECKS_PASSED: acting-team-only damage, contact de-duplication, repeated lives, respawn HP/UI, contact reset, action preservation.");
             }
             finally
             {

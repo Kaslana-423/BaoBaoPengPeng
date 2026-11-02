@@ -16,18 +16,24 @@ namespace TuanziArena
         private UnitActor selected;
         private CircleCollider2D selectedCollider;
         private Vector2 pressPosition;
+        public float MaxBaseImpulse => Mathf.Max(0.01f, maxDragDistance) * Mathf.Max(0.01f, impulsePerUnit);
 
         public void Configure(Camera camera, PrototypeSession prototypeSession, AimPreview preview)
         {
             worldCamera = camera;
             session = prototypeSession;
             aimPreview = preview;
+            if (session != null) session.RegisterLaunchSettings(this);
         }
 
         private void Awake()
         {
             if (worldCamera == null) worldCamera = Camera.main;
-            if (worldCamera != null && session != null && aimPreview != null) return;
+            if (worldCamera != null && session != null && aimPreview != null)
+            {
+                session.RegisterLaunchSettings(this);
+                return;
+            }
             Debug.LogError("PlayerInputController needs World Camera, Session and Aim Preview.", this);
             enabled = false;
         }

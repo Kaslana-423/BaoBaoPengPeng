@@ -12,16 +12,25 @@ namespace TuanziArena
         [SerializeField] private Text attackText;
         [SerializeField] private Text healthText;
         [SerializeField] private Vector2 localOffset = new Vector2(0f, -0.65f);
+        [SerializeField] private ActionRingGraphic actionRing;
         private UnitActor subscribedOwner;
+        private TurnManager turns;
+        private TurnManager subscribedTurns;
+        private GameFlowController flow;
+        private GameFlowController subscribedFlow;
 
         public Text AttackText => attackText;
         public Text HealthText => healthText;
+        public bool IsActionIndicatorVisible => actionRing != null && actionRing.gameObject.activeSelf;
+        public ActionRingGraphic ActionRing => actionRing;
 
         private void Awake() => BuildView();
         private void OnEnable()
         {
             BuildView();
             Bind();
+            BindTurns(turns);
+            BindFlowEvents();
         }
 
         public void BuildView()
@@ -43,7 +52,60 @@ namespace TuanziArena
                 healthText = Badge("Health", root.transform, 37f, 78f,
                     StatIconGraphic.Shape.Heart, new Color(1f, 0.28f, 0.4f));
             }
+            if (actionRing == null)
+            {
+                Transform existing = statsCanvas.transform.Find("UnusedActionRing");
+                if (existing != null) actionRing = existing.GetComponent<ActionRingGraphic>();
+                if (actionRing == null)
+                {
+                    RectTransform ring = Rect("UnusedActionRing", statsCanvas.transform, new Vector2(0f, 47f), new Vector2(196f, 196f));
+                    ring.SetAsFirstSibling();
+                    actionRing = ring.gameObject.AddComponent<ActionRingGraphic>();
+                    actionRing.color = new Color(1f, 0.83f, 0.28f, 0.85f);
+                    actionRing.raycastTarget = false;
+                }
+            }
             Refresh(owner);
+        }
+
+        public void BindTurns(TurnManager manager)
+        {
+            turns = manager;
+            if (actionRing == null) BuildView();
+            UnbindTurns();
+            if (manager != null && isActiveAndEnabled)
+            {
+                subscribedTurns = manager;
+                subscribedTurns.EligibilityChanged += RefreshActionIndicator;
+            }
+            RefreshActionIndicator();
+        }
+
+        public void BindFlow(GameFlowController controller)
+        {
+            flow = controller;
+            BindTurns(controller != null ? controller.Turns : null);
+            BindFlowEvents();
+        }
+
+        private void BindFlowEvents()
+        {
+            UnbindFlow();
+            if (flow != null && isActiveAndEnabled)
+            {
+                subscribedFlow = flow;
+                subscribedFlow.StateChanged += OnFlowStateChanged;
+            }
+            RefreshActionIndicator();
+        }
+
+        private void OnFlowStateChanged(BattleState state) => RefreshActionIndicator();
+
+        private void RefreshActionIndicator()
+        {
+            if (actionRing != null)
+                actionRing.gameObject.SetActive(owner != null && owner.Team == UnitTeam.Player &&
+                    flow != null && flow.State == BattleState.PlayerSelect && turns != null && !turns.HasActed(owner));
         }
 
         private void Bind()
@@ -65,6 +127,7 @@ namespace TuanziArena
                 healthText.color = !unit.IsAlive ? new Color(1f, 0.38f, 0.45f)
                     : unit.CurrentHealth <= unit.MaxHealth * 0.3f ? new Color(1f, 0.77f, 0.35f) : Color.white;
             }
+            RefreshActionIndicator();
         }
 
         private static Text Badge(string name, Transform parent, float x, float width,
@@ -103,7 +166,19 @@ namespace TuanziArena
             subscribedOwner = null;
         }
 
-        private void OnDisable() => Unbind();
-        private void OnDestroy() => Unbind();
+        private void UnbindTurns()
+        {
+            if (subscribedTurns != null) subscribedTurns.EligibilityChanged -= RefreshActionIndicator;
+            subscribedTurns = null;
+        }
+
+        private void UnbindFlow()
+        {
+            if (subscribedFlow != null) subscribedFlow.StateChanged -= OnFlowStateChanged;
+            subscribedFlow = null;
+        }
+
+        private void OnDisable() { Unbind(); UnbindTurns(); UnbindFlow(); }
+        private void OnDestroy() { Unbind(); UnbindTurns(); UnbindFlow(); }
     }
 }

@@ -1,0 +1,35 @@
+出生点复活、完整大轮与旋转行动标记验证
+后续已将圆环限制为仅在我方选择阶段显示；发射即全部隐藏，最新显示时机验证见 ActionRingTimingValidationReport.txt。以下为原始复活验证记录。
+引擎：Unity 2022.3.50f1c1
+方式：隔离临时项目编译、编辑模式检查、实际 SC_Battle Play 模式物理步与渲染检查。
+
+PASS：被击倒后等待旧接触清理，在本局实际初始出生坐标满血复活。
+PASS：复活重置速度、外观、碰撞及血量 UI。
+PASS：已使用我方角色死亡后仍已使用，圆环保持隐藏。
+PASS：未使用我方角色死亡后仍未使用，圆环保持显示。
+PASS：敌方已使用角色复活后同样不能在本大轮再次使用。
+PASS：复活清除旧生命接触抑制，同一角色可多次被击倒和复活。
+PASS：大轮必须包含三个不同我方角色和三个不同敌方角色各一次主动行动。
+PASS：第六名未使用角色暂时死亡时，不提前结束大轮；复活行动并完成物理结算后才重置。
+PASS：我方三个未使用角色有金色双箭头圆环，敌方无环；圆环实际持续旋转。
+PASS：成功使用后圆环由三个减为两个，新大轮恢复三个。
+PASS：实际 Play 完成一轮六次行动，包含已使用我方、未使用我方和已使用敌方的死亡/复活。
+PASS：实际 Play 同时击倒六个角色，全部回到正确出生点，满血、无残余速度，标记保持，大轮未重置。
+PASS：无全灭结束，无计分或输赢判定。
+PASS：原有三档 AI 力度/瞄准、行动方单向伤害、连续碰撞、一次反弹瞄准及物理交接检查。
+
+最终验证无 C# 编译错误、异常或断言失败。
+最终日志标记：
+TUANZI_TURN_AI_CHECKS_PASSED
+TUANZI_COMBAT_CHECKS_PASSED
+TUANZI_AIM_CHECKS_PASSED
+TUANZI_SCENE_CHECKS_PASSED
+TUANZI_PHYSICS_CHECKS_PASSED
+TUANZI_REAL_RESPAWN_PASSED（九次实际复活检查）
+TUANZI_RESPAWN_ROUND_PASSED
+TUANZI_WHOLE_ROSTER_RESPAWN_PASSED
+TUANZI_RESPAWN_PLAY_CHECKS_PASSED
+
+实际场景已使用用户当前编辑的出生坐标，例如我方重锤 (-2.41, 2.20)，未覆盖为旧的固定出生点。
+画面预览：UnusedActionRingsPreview.png、UsedActionRingPreview.png。
+未自动操作鼠标，人工试玩步骤见 README_复活与行动标记.md。

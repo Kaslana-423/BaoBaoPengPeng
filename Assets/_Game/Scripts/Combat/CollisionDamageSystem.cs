@@ -77,6 +77,13 @@ namespace TuanziArena
             if (first != null && second != null) activeContacts.Remove(ContactKey(first, second));
         }
 
+        public void ForgetContacts(UnitActor unit)
+        {
+            if (unit == null) return;
+            uint id = (uint)unit.GetInstanceID();
+            activeContacts.RemoveWhere(key => (uint)(key >> 32) == id || (uint)key == id);
+        }
+
         private static ulong ContactKey(UnitActor first, UnitActor second)
         {
             int idA = first.GetInstanceID(), idB = second.GetInstanceID();
