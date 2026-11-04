@@ -81,7 +81,7 @@ namespace TuanziArena
             RefreshActionIndicator();
         }
 
-        public void BindFlow(GameFlowController controller)s
+        public void BindFlow(GameFlowController controller)
         {
             flow = controller;
             BindTurns(controller != null ? controller.Turns : null);
