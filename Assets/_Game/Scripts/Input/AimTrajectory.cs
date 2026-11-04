@@ -16,11 +16,15 @@ namespace TuanziArena
             : Vector2.Distance(Start, End);
     }
 
-    // Geometry guide only. Target movement and collision energy are resolved by the actual shot.
+    // Frictionless two-body impulse model. The outgoing leg uses the mass ratio and the bounciness of
+    // the first obstruction, so a ball deflects like a rigid body instead of like an immovable wall.
+    // Static geometry (r = 0) keeps the classic -e reflection without a separate code path.
+    // Target motion and chain reactions after the first impact remain unpredictable by design.
     public sealed class AimTrajectory
     {
         private readonly List<RaycastHit2D> hits = new List<RaycastHit2D>(16);
         private const float ContactTolerance = 0.001f;
+        private const float StoppedSpeedRatio = 0.02f;
 
         public AimPath Trace(CircleCollider2D source, Vector2 direction, float length, int obstacleLayers = ~0)
         {
@@ -47,21 +51,62 @@ namespace TuanziArena
             if (remaining <= ContactTolerance) return path;
 
             path.HasBounce = true;
-            Vector2 reflected = Vector2.Reflect(direction, normal).normalized;
+            // The magnitude of the impulse response is the shooter's speed ratio after the impact.
+            Vector2 outgoing = OutgoingVelocity(source, first.collider, direction, normal);
+            float speedRatio = outgoing.magnitude;
+            // Equal mass with full restitution stops the shooter dead: keep the first leg only.
+            if (speedRatio <= StoppedSpeedRatio) return path;
+            outgoing /= speedRatio;
+            // A slower shooter cannot cover the whole budget, so the preview shortens with the speed.
+            float travel = remaining * Mathf.Clamp01(speedRatio);
+            if (travel <= ContactTolerance) return path;
+            // The struck body is skipped: it leaves faster than the shooter, so it cannot be hit twice.
             // Second cast only clips the outgoing leg. There is no second reflection.
-            if (FindHit(scene, source, path.Bounce, radius, reflected, remaining, filter,
-                out RaycastHit2D second, out _))
+            if (FindHit(scene, source, path.Bounce, radius, outgoing, travel, filter,
+                out RaycastHit2D second, out _, first.collider))
             {
-                path.End = path.Bounce + reflected * Mathf.Clamp(second.distance, 0f, remaining);
+                path.End = path.Bounce + outgoing * Mathf.Clamp(second.distance, 0f, travel);
                 path.HitSecondObstacle = true;
             }
-            else path.End = path.Bounce + reflected * remaining;
+            else path.End = path.Bounce + outgoing * travel;
             return path;
+        }
+
+        // Impulse response of one frictionless circle impact, projected onto the incoming unit speed.
+        // k = 1 - (1 + e) / (1 + r): r = 0 reproduces a wall (-e), r = 1 with e = 1 removes all normal motion.
+        private static Vector2 OutgoingVelocity(CircleCollider2D source, Collider2D target,
+            Vector2 direction, Vector2 normal)
+        {
+            float approach = Vector2.Dot(direction, normal);  // Negative while the pair is closing in.
+            Vector2 tangent = direction - normal * approach;  // Friction is zero, so this survives intact.
+            float massRatio = MassRatio(source, target);
+            float bounce = CombinedBounciness(source.sharedMaterial, target.sharedMaterial);
+            float normalScale = 1f - (1f + bounce) / (1f + massRatio);
+            return tangent + normal * (approach * normalScale);
+        }
+
+        private static float MassRatio(CircleCollider2D source, Collider2D target)
+        {
+            Rigidbody2D targetBody = target.attachedRigidbody;
+            // Static and kinematic bodies behave as infinite mass, which is the r = 0 wall case.
+            if (targetBody == null || targetBody.bodyType != RigidbodyType2D.Dynamic) return 0f;
+            Rigidbody2D ownBody = source.attachedRigidbody;
+            float ownMass = ownBody != null ? Mathf.Max(0.0001f, ownBody.mass) : 1f;
+            return ownMass / Mathf.Max(0.0001f, targetBody.mass);
+        }
+
+        // Unity 2D combines restitution by taking the larger of the two materials.
+        // A collider without an assigned material uses the default one, whose bounciness is zero.
+        private static float CombinedBounciness(PhysicsMaterial2D first, PhysicsMaterial2D second)
+        {
+            float a = first != null ? first.bounciness : 0f;
+            float b = second != null ? second.bounciness : 0f;
+            return Mathf.Clamp01(Mathf.Max(a, b));
         }
 
         private bool FindHit(PhysicsScene2D scene, CircleCollider2D source, Vector2 origin,
             float radius, Vector2 direction, float length, ContactFilter2D filter,
-            out RaycastHit2D nearest, out Vector2 nearestNormal)
+            out RaycastHit2D nearest, out Vector2 nearestNormal, Collider2D ignored = null)
         {
             hits.Clear();
             scene.CircleCast(origin, radius, direction, length, filter, hits);
@@ -71,7 +116,8 @@ namespace TuanziArena
             foreach (RaycastHit2D hit in hits)
             {
                 Collider2D obstacle = hit.collider;
-                if (obstacle == null || obstacle == source || obstacle.transform.IsChildOf(source.transform) ||
+                if (obstacle == null || obstacle == source || obstacle == ignored ||
+                    obstacle.transform.IsChildOf(source.transform) ||
                     (source.attachedRigidbody != null && obstacle.attachedRigidbody == source.attachedRigidbody) ||
                     Physics2D.GetIgnoreCollision(source, obstacle)) continue;
 
