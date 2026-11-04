@@ -26,6 +26,8 @@ namespace TuanziArena
         public UnitActor ActiveShooter { get; private set; }
         public UnitTeam? ActiveTeam { get; private set; }
         public int ActionId { get; private set; }
+        public event System.Action<UnitActor, int> ActionStarted;
+        public event System.Action ActionEnded;
 
         private void Awake() { BindCombat(); BindRespawns(); BindFlow(); }
 
@@ -38,6 +40,23 @@ namespace TuanziArena
         }
 
         public void RegisterLaunchSettings(PlayerInputController source) => launchSettingsSource = source;
+
+        // Restart in place: works with the current scene even when it is not in Build Settings.
+        public void RestartBattle()
+        {
+            GetComponent<ImpactFeedback>()?.CancelFeedback();
+            IsResolving = false;
+            ActiveShooter = null;
+            ActiveTeam = null;
+            ActionId = 0;
+            quietTime = elapsed = 0f;
+            if (units != null)
+                foreach (UnitActor unit in units)
+                    if (unit != null) unit.RespawnAtSpawn();
+            BindCombat();
+            BindRespawns();
+            BindFlow();
+        }
         public void SetAIDifficulty(int value)
         {
             if (gameFlow == null) BindFlow();
@@ -90,6 +109,7 @@ namespace TuanziArena
             ActionId++;
             IsResolving = true;
             gameFlow.CommitAction(unit);
+            ActionStarted?.Invoke(unit, ActionId);
             return true;
         }
 
@@ -115,6 +135,7 @@ namespace TuanziArena
             UnitTeam completedTeam = ActiveTeam.Value;
             ActiveShooter = null;
             ActiveTeam = null;
+            ActionEnded?.Invoke();
             gameFlow.OnPhysicsSettled(completedTeam);
         }
     }

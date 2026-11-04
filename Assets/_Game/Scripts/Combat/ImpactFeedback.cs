@@ -101,7 +101,7 @@ namespace TuanziArena
             cameraOffset = Vector3.zero;
         }
 
-        private void CancelFeedback()
+        public void CancelFeedback()
         {
             RestoreTime();
             RemoveCameraOffset();

@@ -8,7 +8,7 @@
 
 每名角色每大轮最多主动弹射一次，被动受撞移动不消耗行动机会。死亡后满血回到本局初始出生点，使用记录不变。敌我六名角色都各主动发射一次并完成结算后，才进入下一大轮，重置行动标记，玩家先手。暂时死亡不会移除本轮应行动的角色或提前重置大轮。
 
-已取消全灭胜负判定，所有角色都可以反复复活。本阶段不计分、不判输赢。未使用我方角色有金色旋转箭头圆环；发射后消失，死亡不改变，新大轮恢复。详见 `README_复活与行动标记.md`。
+已取消全灭胜负判定，所有角色都可以反复复活。目前按击杀计分，先得六分获胜，详见 `README_比分与结算.md`。我方选择阶段显示未使用角色的金色旋转箭头圆环，发射时全部隐藏，下次我方选择时恢复尚未使用角色的圆环；死亡不改变使用情况。详见 `README_复活与行动标记.md`。
 
 ## 难度
 
@@ -60,10 +60,10 @@ int round = session.Flow.RoundNumber;
 GameFlowController 同时提供 C# 事件：
 
 - `DifficultyChanged(AIDifficulty)`：难度变化。
-- `StateChanged(BattleState)`：BattleSetup、PlayerSelect、AIThinking、PhysicsResolving 状态变化。
+- `StateChanged(BattleState)`：BattleSetup、PlayerSelect、AIThinking、PhysicsResolving、ScorePresentation、BattleEnded 状态变化。
 - `RoundChanged(int)`：轮次变化。
 
-UI 初次绑定时先读取上述属性，再订阅事件。`session.Flow.Turns.HasActed(unit)` 可用于显示已行动状态，`Turns.EligibilityChanged` 通知使用标记变化；`session.CanSelectUnit(unit)` 可用于判断当前是否允许操作该角色。计分与结束对局接口待后续规则明确后再添加。
+UI 初次绑定时先读取上述属性，再订阅事件。`session.Flow.Turns.HasActed(unit)` 可用于显示已行动状态，`Turns.EligibilityChanged` 通知使用标记变化；`session.CanSelectUnit(unit)` 可用于判断当前是否允许操作该角色。计分接口位于 `session.Flow.Score`，胜负事件为 `session.Flow.Score.BattleFinished`。
 
 ## 新增或修改脚本
 

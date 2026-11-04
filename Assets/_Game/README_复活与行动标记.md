@@ -10,7 +10,7 @@
 - 敌我双方的六名角色都各主动发射一次，并完成最后一次物理结算后，才结束一大轮。
 - 新大轮清空六名角色的使用记录，玩家先手。死亡或暂时正在复活不会让角色退出本轮名单，也不会提前进入下一大轮。
 - 继续保留双方交替行动、三档 AI、行动方单向伤害、墙角连撞和强碰撞反馈。
-- 已移除全灭胜负判定。本阶段不计分、不判输赢，对局会继续进行。
+- 不按全灭判断胜负。目前已加入击杀计分和六分获胜规则，见 `README_比分与结算.md`；达到六分后暂停结算。
 
 ## 旋转箭头圆环
 
@@ -38,9 +38,9 @@
 | Scripts/UI/UnitStatsUI.cs | 订阅行动资格变化，控制圆环显示。 |
 | Scripts/UI/ActionRingGraphic.cs | 绘制双箭头弧线并旋转。 |
 
-可读取 `unit.SpawnPosition`、`session.Flow.Turns.HasActed(unit)` 和 `session.Flow.Turns.AllHaveActed`。`TurnManager.EligibilityChanged` 可供后续 UI 订阅。`UnitActor.Defeated` 和 `Respawned` 可供以后计分或表现系统使用，本次没有实现分数。
+可读取 `unit.SpawnPosition`、`session.Flow.Turns.HasActed(unit)` 和 `session.Flow.Turns.AllHaveActed`。`TurnManager.EligibilityChanged` 可供 UI 订阅。`UnitActor.Defeated` 已接入计分系统，`Respawned` 可供复活表现订阅。
 
-旧的 `BattleEnded`、`Winner` 和按全灭进入 Victory/Defeat 的状态已移除，后续需要计分结束规则时再添加对应接口。难度调整接口 `session.SetAIDifficulty(int)` 保持可用。
+现有 `BattleEnded` 状态由六分获胜触发，胜方读取 `session.Flow.Score.Winner`，不再使用旧的全灭判定。难度调整接口 `session.SetAIDifficulty(int)` 保持可用。
 
 ## 验收步骤
 

@@ -13,6 +13,7 @@ namespace TuanziArena
         private int contactActionId = -1;
         private PrototypeSession session;
         private ImpactFeedback impactFeedback;
+        public event System.Action<DamageHit> DamageDealt;
 
         public void Configure(PrototypeSession prototypeSession, UnitActor[] units)
         {
@@ -21,6 +22,9 @@ namespace TuanziArena
             {
                 impactFeedback = GetComponent<ImpactFeedback>();
                 if (impactFeedback == null) impactFeedback = gameObject.AddComponent<ImpactFeedback>();
+                DamageFeedbackController feedback = GetComponent<DamageFeedbackController>();
+                if (feedback == null) feedback = gameObject.AddComponent<DamageFeedbackController>();
+                feedback.Configure(session, this);
             }
             activeContacts.Clear();
             contactActionId = -1;
@@ -52,6 +56,7 @@ namespace TuanziArena
         public bool TryResolve(UnitActor first, UnitActor second, float relativeSpeed)
         {
             if (session == null || !session.IsResolving || !session.ActiveTeam.HasValue || first == null || second == null ||
+                (session.Flow != null && session.Flow.Score != null && session.Flow.Score.Winner.HasValue) ||
                 first == second || !first.IsAlive || !second.IsAlive || first.Team == second.Team ||
                 !first.Body.simulated || !second.Body.simulated) return false;
             if (contactActionId != session.ActionId)
@@ -68,7 +73,11 @@ namespace TuanziArena
             if (damage <= 0) return false;
             activeContacts.Add(key);
             UnitActor defender = attacker == first ? second : first;
+            // Capture actual HP loss and the impact location before defeat/respawn callbacks.
+            DamageHit hit = new DamageHit(attacker, defender, Mathf.Min(damage, defender.CurrentHealth),
+                session.ActionId, defender.Body.position);
             defender.TakeDamage(damage);
+            DamageDealt?.Invoke(hit);
             return true;
         }
 

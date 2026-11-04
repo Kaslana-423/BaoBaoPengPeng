@@ -1,0 +1,21 @@
+比分与结算验证 — 2026-11-04
+Unity 2022.3.50f1c1，隔离临时工程，使用当前 Scenes/SC_Battle.unity。
+
+编辑模式检查全部通过：
+- ScoreRulesChecks：双方计分、行动外/同队死亡不计分、同一生命去重、复活后重复击杀计分、六分锁定、重开复位。
+- TurnAndAIChecks、CombatChecks、PrototypeSmokeChecks、AimPreviewChecks：原有六行动大轮、AI 难度、复活、圆环、物理、伤害和一次反弹辅助线回归通过。
+
+实际 Play 检查通过（确定性调用正式碰撞伤害入口 TryResolve 和物理结算入口）：
+- 两个真实 UI 预制体由 Resources 自动加载；初始比分 0:0，弹窗/结算隐藏。
+- 零击杀跳过得分动画，敌方击杀正确计敌方一分；一次行动三杀累计 +3。
+- 每条生命只加一次分，同一目标复活后再次击杀可继续得分。
+- 得分展示时 Time.timeScale = 0，UI 动画正常弹入/停留/收回；鼠标发射、AI、行动圆环均锁定。
+- 碰撞时停先释放，再由比分系统暂停，不会提前解除暂停；动画后正确恢复原有 0.5 时间倍率。
+- 玩家到六分显示胜利，敌方到六分显示失败，BattleFinished 每局只通知一次，不再换边或加分。
+- 结算保持暂停，“再来一局”按钮在暂停期间可用，重开恢复 0:0、满血出生点、所有行动资格和第一大轮。
+- 横屏 1280x720、竖屏 720x1280 已渲染并检查。数字改为粗体，顶部没有裁切，结算内容完整。
+- 最终版本无 C# 编译错误/警告、运行时异常、断言失败。
+
+验证标记：TUANZI_SCORE_RULES_PASSED / TUANZI_SCORE_UI_PLAY_PASSED / TUANZI_SCORE_PLAY_PASSED。
+预览图：ScorePopupPreview.png / VictoryResultPreview.png / DefeatResultPreview.png。
+历史报告中“不计分、不判胜负”的描述属于对应开发阶段，当前规则以 README_比分与结算.md 为准。

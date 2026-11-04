@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f34b6e913734eb79b6342d005baaae2, type: 3}
+  m_Name: DamageFeedbackSettings
+  m_EditorClassIdentifier: 
+  showFloatingNumbers: 1
+  numberFont: {fileID: 12800000, guid: 029f787bacca483f915fbe1909801b8c, type: 3}
+  numberFontSize: 58
+  playerDamageColor: {r: 1, g: 0.85, b: 0.22, a: 1}
+  enemyDamageColor: {r: 1, g: 0.4, b: 0.51, a: 1}
+  outlineWidth: 3.5
+  outlineColor: {r: 0.22, g: 0.1, b: 0.28, a: 1}
+  numberLifetime: 0.95
+  riseDistance: 55
+  horizontalDrift: 28
+  worldOffset: {x: 0, y: 0.15, z: 0}
+  popScale: 1.35
+  fadeStart: 0.55
+  numberSeparation: 26
+  maximumNumbers: 40
+  showTotalDamage: 1
+  labelFont: {fileID: 12800000, guid: ab3269a16faa66c43a962efbab9b047c, type: 3}
+  totalPosition: {x: 0, y: -199}
+  totalScale: 1
+  totalFontSize: 42
+  totalNumberColor: {r: 1, g: 0.85, b: 0.22, a: 1}
+  totalOutlineWidth: 2
+  totalOutlineColor: {r: 0.2, g: 0.1, b: 0.25, a: 1}
+  panelColor: {r: 0.08, g: 0.15, b: 0.26, a: 0.96}
+  enableFlashes: 1
+  flashColor: {r: 1, g: 0.84, b: 0.35, a: 1}
+  flashDuration: 0.55
+  flashIntensity: 0.7
+  totalPunchScale: 0.12

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace TuanziArena
 {
-    public enum BattleState { BattleSetup, PlayerSelect, PhysicsResolving, AIThinking }
+    public enum BattleState { BattleSetup, PlayerSelect, PhysicsResolving, AIThinking, ScorePresentation, BattleEnded }
 
     [DisallowMultipleComponent]
     public sealed class GameFlowController : MonoBehaviour
@@ -16,6 +16,7 @@ namespace TuanziArena
         private bool difficultyInitialized;
         public TurnManager Turns { get; } = new TurnManager();
         public AIController AI { get; private set; }
+        public BattleScoreController Score { get; private set; }
         public BattleState State => state;
         public AIDifficulty Difficulty => difficulty;
         public int RoundNumber => Turns.RoundNumber;
@@ -42,6 +43,9 @@ namespace TuanziArena
             AI = GetComponent<AIController>();
             if (AI == null) AI = gameObject.AddComponent<AIController>();
             AI.Configure(this, session);
+            Score = GetComponent<BattleScoreController>();
+            if (Score == null) Score = gameObject.AddComponent<BattleScoreController>();
+            Score.Configure(session, this, Turns.Units);
             SetState(BattleState.BattleSetup);
             RoundChanged?.Invoke(RoundNumber);
             if (Turns.Units.Count > 0) EnterAvailableTurn(UnitTeam.Player);
@@ -74,12 +78,27 @@ namespace TuanziArena
 
         public void OnPhysicsSettled(UnitTeam actingTeam)
         {
+            if (state != BattleState.PhysicsResolving) return;
+            if (Score.HasUnpresentedScore)
+            {
+                SetState(BattleState.ScorePresentation);
+                Score.PresentAction(actingTeam);
+                return;
+            }
             EnterAvailableTurn(actingTeam == UnitTeam.Player ? UnitTeam.Enemy : UnitTeam.Player);
+        }
+
+        internal void CompleteScorePresentation(UnitTeam actingTeam)
+        {
+            if (state != BattleState.ScorePresentation) return;
+            if (Score.Winner.HasValue) SetState(BattleState.BattleEnded);
+            else EnterAvailableTurn(actingTeam == UnitTeam.Player ? UnitTeam.Enemy : UnitTeam.Player);
         }
 
         public void ReevaluateTurn()
         {
-            if (state == BattleState.PhysicsResolving) return;
+            if (state == BattleState.PhysicsResolving || state == BattleState.ScorePresentation ||
+                state == BattleState.BattleEnded) return;
             EnterAvailableTurn(state == BattleState.AIThinking ? UnitTeam.Enemy : UnitTeam.Player);
         }
 
