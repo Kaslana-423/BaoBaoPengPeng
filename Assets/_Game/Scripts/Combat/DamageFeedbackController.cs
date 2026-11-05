@@ -53,15 +53,23 @@ namespace TuanziArena
         {
             actionId = id;
             TotalDamage = HitCount = 0;
-            ActingTeam = actor.Team;
+            // A hazard can be the first thing to hurt anyone in an action, and it carries no attacker.
+            if (actor != null) ActingTeam = actor.Team;
             UI?.BeginAction(ActingTeam);
             TotalDamageChanged?.Invoke(0);
         }
 
         private void OnDamage(DamageHit hit)
         {
-            if (hit.Amount <= 0 || hit.Attacker == null) return;
+            if (hit.Amount <= 0) return;
             if (hit.ActionId != actionId) OnActionStarted(hit.Attacker, hit.ActionId);
+            // A hazard hit with no attacker is self-inflicted: it is shown in its own colour, but it
+            // belongs to nobody and must not inflate this action's damage total.
+            if (hit.Attacker == null)
+            {
+                UI?.ShowHazardHit(hit);
+                return;
+            }
             TotalDamage = (int)Math.Min(int.MaxValue, (long)TotalDamage + hit.Amount);
             HitCount++;
             UI?.ShowHit(hit, TotalDamage, HitCount);

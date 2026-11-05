@@ -11,6 +11,7 @@ namespace TuanziArena
         private DamageFeedbackSettings settings;
         private Vector3 worldPosition;
         private UnitTeam team;
+        private bool hazard;
         private float age;
         private int lane;
         public string DisplayedText => value.text;
@@ -26,6 +27,7 @@ namespace TuanziArena
             settings = style;
             worldPosition = hit.Position + style.worldOffset;
             team = hit.Attacker.Team;
+            hazard = false;
             lane = separationLane;
             age = 0f;
             value.text = "-" + hit.Amount;
@@ -36,11 +38,30 @@ namespace TuanziArena
             gameObject.SetActive(true);
         }
 
+        // Self-inflicted hazard damage: shown in its own colour, never in either team's attack colour.
+        public void ShowHazard(DamageHit hit, DamageFeedbackSettings style)
+        {
+            settings = style;
+            worldPosition = hit.Position + style.worldOffset;
+            team = hit.Defender != null ? hit.Defender.Team : UnitTeam.Player;
+            hazard = true;
+            lane = 0;
+            age = 0f;
+            value.text = "-" + hit.Amount;
+            ApplyStyle(style);
+            fade.alpha = 1f;
+            transform.localScale = Vector3.one * 0.65f;
+            transform.localRotation = Quaternion.identity;
+            gameObject.SetActive(true);
+        }
+
         public void ApplyStyle(DamageFeedbackSettings style)
         {
             settings = style;
-            Style(value, outline, style.numberFont, style.numberFontSize,
-                team == UnitTeam.Player ? style.playerDamageColor : style.enemyDamageColor,
+            Color color = hazard
+                ? style.hazardDamageColor
+                : team == UnitTeam.Player ? style.playerDamageColor : style.enemyDamageColor;
+            Style(value, outline, style.numberFont, style.numberFontSize, color,
                 style.outlineWidth, style.outlineColor);
         }
 

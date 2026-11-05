@@ -12,11 +12,18 @@ namespace TuanziArena
         [SerializeField] private Color pathColor = new Color(0.95f, 1f, 1f, 0.95f);
         [SerializeField, Min(0.01f)] private float lineWidth = 0.09f;
         [SerializeField, Min(0.05f)] private float dashSpacing = 0.3f;
+        [Tooltip("Colour and length of the boost hint drawn where a hazard cuts the guide short.")]
+        [SerializeField] private Color hazardColor = new Color(0.4f, 0.97f, 1f, 0.95f);
+        [SerializeField, Min(0.05f)] private float hazardArrowSize = 0.34f;
+        [Tooltip("Fixed length of the hint's stem, so the boosted direction is readable at any charge.")]
+        [SerializeField, Min(0.1f)] private float hazardArrowLength = 0.9f;
 
         private readonly AimTrajectory trajectory = new AimTrajectory();
         private Texture2D dashTexture;
         private Material runtimeMaterial;
         private Material originalMaterial;
+        private LineRenderer hazardArrow;
+        private LineRenderer hazardTail;
 
         private void Awake() => Hide();
 
@@ -43,6 +50,44 @@ namespace TuanziArena
             aimLine.widthMultiplier = lineWidth;
             aimLine.textureScale = new Vector2(1f / Mathf.Max(0.05f, dashSpacing), 1f);
             aimLine.enabled = path.Length > radius + lineWidth;
+            ShowHazardArrow(path);
+        }
+
+        // Hazards cut the guide short, so the hint continues from the entry point along the exact exit
+        // direction with a fixed-length stem and a chevron head.
+        private void ShowHazardArrow(AimPath path)
+        {
+            bool show = path.StoppedByHazard && path.HazardDirection.sqrMagnitude > 0.0001f &&
+                hazardArrow != null && hazardTail != null;
+            if (!show)
+            {
+                if (hazardArrow != null) hazardArrow.enabled = false;
+                if (hazardTail != null) hazardTail.enabled = false;
+                return;
+            }
+            Vector2 direction = path.HazardDirection.normalized;
+            Vector2 tip = path.End + direction * hazardArrowLength;
+            Vector2 back = tip - direction * hazardArrowSize * 0.85f;
+            Vector2 side = new Vector2(-direction.y, direction.x) * hazardArrowSize * 0.5f;
+
+            hazardTail.positionCount = 2;
+            hazardTail.SetPosition(0, new Vector3(path.End.x, path.End.y, -0.3f));
+            hazardTail.SetPosition(1, new Vector3(tip.x, tip.y, -0.3f));
+            hazardTail.textureScale = new Vector2(1f / Mathf.Max(0.05f, dashSpacing), 1f);
+            hazardTail.startColor = hazardColor;
+            hazardTail.endColor = hazardColor;
+            hazardTail.widthMultiplier = lineWidth;
+            hazardTail.enabled = true;
+
+            hazardArrow.positionCount = 3;
+            hazardArrow.SetPosition(0, new Vector3(back.x + side.x, back.y + side.y, -0.31f));
+            hazardArrow.SetPosition(1, new Vector3(tip.x, tip.y, -0.31f));
+            hazardArrow.SetPosition(2, new Vector3(back.x - side.x, back.y - side.y, -0.31f));
+            hazardArrow.textureScale = new Vector2(4f, 1f);
+            hazardArrow.startColor = hazardColor;
+            hazardArrow.endColor = hazardColor;
+            hazardArrow.widthMultiplier = lineWidth;
+            hazardArrow.enabled = true;
         }
 
         private void SetPoint(int index, Vector2 point) =>
@@ -66,6 +111,34 @@ namespace TuanziArena
             aimLine.numCapVertices = 0;
             aimLine.numCornerVertices = 4;
             aimLine.sortingOrder = 20;
+            EnsureHazardArrow();
+        }
+
+        private void EnsureHazardArrow()
+        {
+            hazardArrow = EnsureHazardLine("HazardArrow", 22);
+            hazardTail = EnsureHazardLine("HazardTail", 21);
+        }
+
+        private LineRenderer EnsureHazardLine(string name, int sortingOrder)
+        {
+            Transform existing = transform.Find(name);
+            LineRenderer line = existing != null ? existing.GetComponent<LineRenderer>() : null;
+            if (line == null)
+            {
+                GameObject host = new GameObject(name, typeof(LineRenderer));
+                host.transform.SetParent(transform, false);
+                line = host.GetComponent<LineRenderer>();
+            }
+            line.sharedMaterial = runtimeMaterial;
+            line.useWorldSpace = true;
+            line.loop = false;
+            line.textureMode = LineTextureMode.Tile;
+            line.numCapVertices = 0;
+            line.numCornerVertices = 2;
+            line.sortingOrder = sortingOrder;
+            line.enabled = false;
+            return line;
         }
 
         private static Texture2D CreateDashTexture()
@@ -96,6 +169,8 @@ namespace TuanziArena
         {
             if (aimLine == null) aimLine = GetComponent<LineRenderer>();
             aimLine.enabled = false;
+            if (hazardArrow != null) hazardArrow.enabled = false;
+            if (hazardTail != null) hazardTail.enabled = false;
         }
 
         private void OnDisable() => Hide();

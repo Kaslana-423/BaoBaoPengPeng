@@ -93,6 +93,25 @@ namespace TuanziArena
             return true;
         }
 
+        // Environmental damage (spikes). A hit on the opposing side is credited to the acting shooter, so
+        // a ball that is knocked into a hazard and dies there still counts as a point. A hit on the acting
+        // side is self-inflicted: it is dealt and shown, but it is credited to nobody.
+        public bool ApplyHazardDamage(UnitActor victim, int amount, Vector2 direction)
+        {
+            if (session == null || victim == null || amount <= 0 || !victim.IsAlive) return false;
+            if (session.Flow != null && session.Flow.Score != null && session.Flow.Score.Winner.HasValue) return false;
+            bool selfInflicted = session.ActiveTeam.HasValue && victim.Team == session.ActiveTeam.Value;
+            int healthBefore = victim.CurrentHealth;
+            // A self-inflicted death must not become a free full heal on respawn.
+            if (selfInflicted && amount >= healthBefore) victim.SetRespawnHealth(healthBefore);
+            UnitActor attacker = selfInflicted ? null : session.ActiveShooter;
+            DamageHit hit = new DamageHit(attacker, victim, Mathf.Min(amount, healthBefore),
+                session.ActionId, victim.Body.position);
+            victim.TakeDamage(amount, direction);
+            DamageDealt?.Invoke(hit);
+            return true;
+        }
+
         public void EndContact(UnitActor first, UnitActor second)
         {
             if (first != null && second != null) activeContacts.Remove(ContactKey(first, second));

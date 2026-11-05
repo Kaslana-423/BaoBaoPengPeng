@@ -18,6 +18,7 @@ namespace TuanziArena
         [SerializeField, Tooltip("Runtime health. Reset from UnitData when a battle starts.")]
         private int currentHealth;
         private bool healthInitialized;
+        private int pendingRespawnHealth = -1;
         private Color livingColor;
         private Vector2 spawnPosition;
         private bool spawnRecorded;
@@ -53,6 +54,7 @@ namespace TuanziArena
             selectionIndicator = indicator;
             ApplyConfiguration();
             RecordSpawn();
+            pendingRespawnHealth = -1;
             ResetHealth();
             SetSelected(false);
         }
@@ -96,13 +98,24 @@ namespace TuanziArena
 
         public void ResetHealth()
         {
-            currentHealth = MaxHealth;
+            // A self-inflicted hazard death restores the health the unit had before the fatal hit,
+            // so suicide cannot be used as a free full heal.
+            currentHealth = pendingRespawnHealth >= 0
+                ? Mathf.Clamp(pendingRespawnHealth, 1, Mathf.Max(1, MaxHealth))
+                : MaxHealth;
+            pendingRespawnHealth = -1;
             healthInitialized = true;
             Body.simulated = true;
             GetComponent<CircleCollider2D>().enabled = true;
             if (visual != null) visual.color = livingColor;
             StatsChanged?.Invoke(this);
         }
+
+        // Only used by self-inflicted hazard damage: the next respawn restores this value.
+        public void SetRespawnHealth(int health) =>
+            pendingRespawnHealth = Mathf.Clamp(health, 1, Mathf.Max(1, MaxHealth));
+
+        public void ClearRespawnHealth() => pendingRespawnHealth = -1;
 
         public void TakeDamage(int amount) => TakeDamage(amount, Vector2.up);
 
@@ -149,6 +162,30 @@ namespace TuanziArena
             if (!CanLaunch || impulse.sqrMagnitude < 0.0001f) return false;
             Body.AddForce(impulse * data.launchMultiplier, ForceMode2D.Impulse);
             return true;
+        }
+
+        // Scene hazards drive the body directly: they overwrite the velocity instead of queueing a force,
+        // so the result is exact and can be followed by a speed cap in the same call.
+        public void SetVelocity(Vector2 velocity)
+        {
+            if (!Body.simulated) return;
+#if UNITY_6000_0_OR_NEWER
+            Body.linearVelocity = velocity;
+#else
+            Body.velocity = velocity;
+#endif
+        }
+
+        public Vector2 Velocity
+        {
+            get
+            {
+#if UNITY_6000_0_OR_NEWER
+                return Body.linearVelocity;
+#else
+                return Body.velocity;
+#endif
+            }
         }
 
         public float SpeedSquared

@@ -11,6 +11,8 @@ namespace TuanziArena
         [Range(16, 120)] public int numberFontSize = 58;
         public Color playerDamageColor = new Color(1f, 0.85f, 0.22f);
         public Color enemyDamageColor = new Color(1f, 0.40f, 0.51f);
+        [Tooltip("自伤（例如自己撞上尖刺）。既不属于我方战果，也不属于敌方，用独立颜色区分。")]
+        public Color hazardDamageColor = new Color(1f, 0.62f, 0.18f);
         [Range(0f, 12f)] public float outlineWidth = 3.5f;
         public Color outlineColor = new Color(0.22f, 0.10f, 0.28f);
 
