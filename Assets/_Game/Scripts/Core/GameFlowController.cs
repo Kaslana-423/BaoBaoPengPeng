@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace TuanziArena
 {
-    public enum BattleState { BattleSetup, PlayerSelect, PhysicsResolving, AIThinking, ScorePresentation, BattleEnded }
+    public enum BattleState { BattleSetup, PlayerSelect, PhysicsResolving, AIThinking, ScorePresentation, BattleEnded, RespawnWaiting }
 
     [DisallowMultipleComponent]
     public sealed class GameFlowController : MonoBehaviour
@@ -76,9 +76,14 @@ namespace TuanziArena
             SetState(BattleState.PhysicsResolving);
         }
 
+        public void BeginRespawnWait()
+        {
+            if (state == BattleState.PhysicsResolving) SetState(BattleState.RespawnWaiting);
+        }
+
         public void OnPhysicsSettled(UnitTeam actingTeam)
         {
-            if (state != BattleState.PhysicsResolving) return;
+            if (state != BattleState.PhysicsResolving && state != BattleState.RespawnWaiting) return;
             if (Score.HasUnpresentedScore)
             {
                 SetState(BattleState.ScorePresentation);
@@ -97,7 +102,7 @@ namespace TuanziArena
 
         public void ReevaluateTurn()
         {
-            if (state == BattleState.PhysicsResolving || state == BattleState.ScorePresentation ||
+            if (state == BattleState.PhysicsResolving || state == BattleState.RespawnWaiting || state == BattleState.ScorePresentation ||
                 state == BattleState.BattleEnded) return;
             EnterAvailableTurn(state == BattleState.AIThinking ? UnitTeam.Enemy : UnitTeam.Player);
         }

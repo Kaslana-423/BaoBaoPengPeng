@@ -44,6 +44,7 @@ namespace TuanziArena
         // Restart in place: works with the current scene even when it is not in Build Settings.
         public void RestartBattle()
         {
+            respawnController?.CancelPending();
             GetComponent<ImpactFeedback>()?.CancelFeedback();
             IsResolving = false;
             ActiveShooter = null;
@@ -117,7 +118,8 @@ namespace TuanziArena
         {
             if (!IsResolving) return;
             elapsed += Time.fixedDeltaTime;
-            if (respawnController != null && respawnController.PendingCount > 0) { quietTime = 0f; return; }
+            // Dead units stay absent until this action ends. Only the movie blocks settling.
+            if (respawnController != null && respawnController.IsPresenting) { quietTime = 0f; return; }
             float highestSpeedSquared = 0f;
             foreach (UnitActor unit in units)
                 if (unit != null && unit.isActiveAndEnabled && unit.Body.simulated)
@@ -136,7 +138,12 @@ namespace TuanziArena
             ActiveShooter = null;
             ActiveTeam = null;
             ActionEnded?.Invoke();
-            gameFlow.OnPhysicsSettled(completedTeam);
+            if (respawnController != null && respawnController.PendingCount > 0)
+            {
+                gameFlow.BeginRespawnWait();
+                respawnController.RespawnAfterAction(() => gameFlow.OnPhysicsSettled(completedTeam));
+            }
+            else gameFlow.OnPhysicsSettled(completedTeam);
         }
     }
 }

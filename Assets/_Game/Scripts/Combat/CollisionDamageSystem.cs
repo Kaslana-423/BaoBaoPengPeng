@@ -49,11 +49,23 @@ namespace TuanziArena
 
         public void ReportImpact(UnitActor unit, float relativeSpeed, Vector2 direction)
         {
-            if (session != null && session.IsResolving && unit != null && unit.IsAlive && impactFeedback != null)
-                impactFeedback.TryPlay(relativeSpeed, direction);
+            ReportImpact(unit, null, relativeSpeed, direction, unit != null ? unit.Body.position : Vector2.zero);
+        }
+
+        public void ReportImpact(UnitActor unit, UnitActor other, float relativeSpeed, Vector2 direction, Vector2 point)
+        {
+            if (session != null && session.IsResolving && unit != null && unit.IsAlive && impactFeedback != null &&
+                (session.Flow == null || session.Flow.Score == null || !session.Flow.Score.Winner.HasValue))
+                impactFeedback.PlayCollision(unit, other, relativeSpeed, direction, point);
         }
 
         public bool TryResolve(UnitActor first, UnitActor second, float relativeSpeed)
+        {
+            Vector2 direction = first != null && second != null ? second.Body.position - first.Body.position : Vector2.up;
+            return TryResolve(first, second, relativeSpeed, direction);
+        }
+
+        public bool TryResolve(UnitActor first, UnitActor second, float relativeSpeed, Vector2 firstToSecond)
         {
             if (session == null || !session.IsResolving || !session.ActiveTeam.HasValue || first == null || second == null ||
                 (session.Flow != null && session.Flow.Score != null && session.Flow.Score.Winner.HasValue) ||
@@ -76,7 +88,7 @@ namespace TuanziArena
             // Capture actual HP loss and the impact location before defeat/respawn callbacks.
             DamageHit hit = new DamageHit(attacker, defender, Mathf.Min(damage, defender.CurrentHealth),
                 session.ActionId, defender.Body.position);
-            defender.TakeDamage(damage);
+            defender.TakeDamage(damage, attacker == first ? firstToSecond : -firstToSecond);
             DamageDealt?.Invoke(hit);
             return true;
         }

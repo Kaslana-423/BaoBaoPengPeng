@@ -23,7 +23,8 @@ namespace TuanziArena
             {
                 Vector2 direction = collision.contactCount > 0 ? -collision.GetContact(0).normal
                     : collision.relativeVelocity.normalized;
-                damageSystem.ReportImpact(actor, collision.relativeVelocity.magnitude, direction);
+                Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : actor.Body.position;
+                damageSystem.ReportImpact(actor, other, collision.relativeVelocity.magnitude, direction, point);
             }
             ReportContact(collision);
         }
@@ -37,7 +38,11 @@ namespace TuanziArena
             if (damageSystem == null || actor == null) return;
             UnitActor other = collision.collider.GetComponentInParent<UnitActor>();
             if (other != null && actor.GetInstanceID() < other.GetInstanceID())
-                damageSystem.TryResolve(actor, other, collision.relativeVelocity.magnitude);
+            {
+                Vector2 direction = collision.contactCount > 0 ? -collision.GetContact(0).normal
+                    : other.Body.position - actor.Body.position;
+                damageSystem.TryResolve(actor, other, collision.relativeVelocity.magnitude, direction);
+            }
         }
 
         private void OnCollisionExit2D(Collision2D collision)

@@ -25,6 +25,8 @@ namespace TuanziArena
         public event Action<UnitActor> Defeated;
         public event Action<UnitActor> Respawned;
         public UnitData Data => data;
+        public SpriteRenderer BodyVisual => visual;
+        public Vector2 LastHitDirection { get; private set; } = Vector2.up;
         public UnitTeam Team => team;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public int MaxHealth => data != null ? Mathf.Max(1, data.maxHealth) : 0;
@@ -69,21 +71,24 @@ namespace TuanziArena
             spawnRecorded = true;
         }
 
-        public void RespawnAtSpawn()
+        public void RespawnAtSpawn() => RespawnAt(SpawnPosition);
+
+        // A temporary safe placement must never change the recorded initial spawn.
+        public void RespawnAt(Vector2 position)
         {
             RecordSpawn();
             Body.simulated = false;
             StopMotion();
             RigidbodyInterpolation2D interpolation = Body.interpolation;
             Body.interpolation = RigidbodyInterpolation2D.None;
-            Body.position = spawnPosition;
+            Body.position = position;
             Body.rotation = 0f;
             // A disabled body's transform may still hold its old interpolated pose. Synchronize
             // both while simulation is off, so re-enabling cannot overwrite the spawn position.
-            transform.SetPositionAndRotation(new Vector3(spawnPosition.x, spawnPosition.y, transform.position.z), Quaternion.identity);
+            transform.SetPositionAndRotation(new Vector3(position.x, position.y, transform.position.z), Quaternion.identity);
             SetSelected(false);
             ResetHealth();
-            Body.position = spawnPosition;
+            Body.position = position;
             StopMotion();
             Body.interpolation = interpolation;
             Respawned?.Invoke(this);
@@ -99,9 +104,12 @@ namespace TuanziArena
             StatsChanged?.Invoke(this);
         }
 
-        public void TakeDamage(int amount)
+        public void TakeDamage(int amount) => TakeDamage(amount, Vector2.up);
+
+        public void TakeDamage(int amount, Vector2 hitDirection)
         {
             if (amount <= 0 || !IsAlive) return;
+            LastHitDirection = hitDirection.sqrMagnitude > 0.0001f ? hitDirection.normalized : Vector2.up;
             currentHealth = Mathf.Max(0, currentHealth - amount);
             if (currentHealth == 0)
             {
@@ -109,7 +117,6 @@ namespace TuanziArena
                 Body.simulated = false;
                 GetComponent<CircleCollider2D>().enabled = false;
                 SetSelected(false);
-                if (visual != null) visual.color = new Color(0.3f, 0.34f, 0.38f, 0.55f);
             }
             StatsChanged?.Invoke(this);
             if (currentHealth == 0) Defeated?.Invoke(this);

@@ -1,0 +1,18 @@
+碰撞十字闪光与角色闪白验证 — 2026-11-05
+Unity 2022.3.50f1c1，隔离工程，当前 Scenes/SC_Battle.unity。
+
+编辑模式回归：CombatChecks、DamageFeedbackChecks、ScoreRulesChecks 全部通过。
+实际 Play 验证：
+- 普通碰撞生成接触点十字闪光，并让双方角色闪白，不触发强碰撞时停。
+- 通过真实 Rigidbody2D 运动产生强碰撞，OnCollisionEnter2D 碰撞对仅生成一次特效，双方闪白并触发时停。
+- 白色覆盖层不修改角色原始 color 或 sharedMaterial；闪光与闪白正常消退。
+- 角色死亡复活立即清理上一条生命的闪白，恢复正确队伍颜色。
+- 比分弹窗接管暂停，碰撞时停不会将比分暂停提前解除。
+- 从 Time.timeScale = 0.5 进入时停，关闭反馈组件后准确恢复到 0.5。
+- 密集生成 60 次闪光，最多复用 24 个实例；CancelFeedback 清除所有闪光与闪白。
+- 白色轮廓着色器支持正常，已渲染检查十字光芒与白色覆盖效果。
+- 无 C# 编译错误/警告、Shader 编译错误、运行时异常或断言失败。
+
+通过标记：TUANZI_CROSS_VISUALS_PASSED / TUANZI_CROSS_PLAY_PASSED。
+预览：CrossImpactPreview.png。
+配置入口：_Game/Resources/ImpactFeedbackSettings.asset。

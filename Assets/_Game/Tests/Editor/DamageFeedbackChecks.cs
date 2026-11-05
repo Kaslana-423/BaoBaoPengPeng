@@ -38,6 +38,7 @@ namespace TuanziArena.Editor
                 Check(session.TryLaunch(units[0], Vector2.right), "Player launch.");
                 Check(!damage.TryResolve(units[0], units[1], 4f) && events == 0, "No friendly damage UI.");
                 Check(damage.TryResolve(units[0], units[2], 4f), "First hit.");
+                Check(units[2].LastHitDirection == Vector2.right, "Player damage records the direction away from the attacker.");
                 Check(feedback.TotalDamage == 10 && last.Amount == 10 && last.ActionId == session.ActionId, "Actual damage is published.");
                 Check(!damage.TryResolve(units[2], units[0], 4f) && events == 1, "Reverse callback is not a second number.");
                 damage.EndContact(units[0], units[2]); damage.TryResolve(units[0], units[2], 4f);
@@ -60,6 +61,7 @@ namespace TuanziArena.Editor
                 for (int i = 0; i < 40 && session.IsResolving; i++) tick.Invoke(session, null);
                 Check(session.TryLaunchForTeam(units[2], Vector2.left, UnitTeam.Enemy), "Enemy launch.");
                 damage.TryResolve(units[2], units[0], 4f);
+                Check(units[0].LastHitDirection == Vector2.left, "Enemy damage records the opposite flight direction.");
                 Check(feedback.TotalDamage == 10 && feedback.HitCount == 1 && feedback.ActingTeam == UnitTeam.Enemy,
                     "New action clears the old total and switches the attacking team.");
                 Check(!session.TryLaunch(units[1], Vector2.zero) && feedback.TotalDamage == 10, "Rejected/cancelled input never resets total.");

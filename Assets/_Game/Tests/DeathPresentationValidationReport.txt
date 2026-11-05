@@ -1,0 +1,26 @@
+历史记录：下文验证的是早期“缩小、消失后复活”版本，已被最新规则取代。
+当前“不缩小、全场停稳后 0.8 秒、安全复活”的验证见 RespawnSequenceValidationReport.txt。
+DeathFlightPreview.png 也是早期版本预览。
+
+死亡特写与延迟复活验证 — 2026-11-05
+Unity 2022.3.50f1c1；隔离工程；当前 Scenes/SC_Battle.unity。
+
+编辑模式：TurnAndAIChecks、CombatChecks、DamageFeedbackChecks、ScoreRulesChecks 全部通过。
+新增方向检查：我方攻击记录远离攻击者的方向；敌方攻击记录对应反向方向。
+
+实际 Play 流程检查（通过正式 TryResolve 确定性触发致死伤害）：
+- 从碰撞时停移交到死亡暂停，禁用震屏写入镜头，摄像机拉近并聚焦死亡位置。
+- 身体沿致死受击方向平移、快速旋转、缩小，最后隐藏；角色属性 Canvas 同步隐藏。
+- 测量完全消失到 Respawned 的真实时间，不早于 0.8 秒（验证帧采样容差 0.02 秒）。
+- 复活恢复满血、初始出生点、视觉局部位置/旋转/缩放/激活状态和属性 UI。
+- 摄像机位置和 orthographicSize 精确恢复，没有连续特写累积偏移。
+- 死亡队列未完成时，即便手动推动物理结算也不会弹出比分或切换行动。
+- 敌方行动连续击杀两名玩家，特写顺序播放；已用/未用角色的资格保持不变。
+- 飞出途中重开可取消旧协程、恢复角色和镜头，并恢复原来的 0.5 时间倍率。
+- 同一行动先后三杀再三杀，六分已锁定时仍完成全部死亡/延迟复活，再显示比分，最后显示胜利；结算事件仅一次。
+- 最终版本无 C# 编译错误/警告、运行时异常或断言失败。
+
+通过标记：TUANZI_DEATH_SEQUENCE_PASSED / TUANZI_DEATH_PLAY_PASSED。
+预览：DeathFlightPreview.png。
+配置：_Game/Resources/DeathPresentationSettings.asset。
+既有报告中的数十毫秒快速复活属于旧阶段；当前 Play 规则以 README_死亡特写.md 为准。

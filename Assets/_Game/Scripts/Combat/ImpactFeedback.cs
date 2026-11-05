@@ -11,7 +11,9 @@ namespace TuanziArena
         private bool ownsHitStop;
         private float previousTimeScale;
         private double stopUntil;
-        private double nextFeedbackTime;
+        private double nextShakeTime;
+        private double nextHitStopTime;
+        private ImpactVisuals visuals;
         private float shakeRemaining;
         private float shakeDuration;
         private float shakeDistance;
@@ -23,6 +25,19 @@ namespace TuanziArena
         public int TriggerCount { get; private set; }
 
         private void Awake() => LoadSettings();
+
+        public void PlayCollision(UnitActor first, UnitActor second, float relativeSpeed, Vector2 direction, Vector2 point)
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled || (Time.timeScale <= 0f && !ownsHitStop)) return;
+            LoadSettings();
+            if (visuals == null)
+            {
+                visuals = GetComponent<ImpactVisuals>();
+                if (visuals == null) visuals = gameObject.AddComponent<ImpactVisuals>();
+            }
+            visuals.Play(first, second, point, direction, relativeSpeed, settings);
+            TryPlay(relativeSpeed, direction);
+        }
 
         private void LoadSettings()
         {
@@ -39,15 +54,18 @@ namespace TuanziArena
             if (!Application.isPlaying || !isActiveAndEnabled || Time.timeScale <= 0f) return false;
             LoadSettings();
             double now = Time.realtimeSinceStartupAsDouble;
-            if (relativeSpeed < settings.minimumImpactSpeed || now < nextFeedbackTime ||
-                (!settings.enableHitStop && !settings.enableShake)) return false;
+            bool shake = settings.enableShake && settings.shakeSeconds > 0f &&
+                relativeSpeed >= settings.minimumImpactSpeed && now >= nextShakeTime;
+            bool stop = settings.enableHitStop && settings.hitStopSeconds > 0f &&
+                relativeSpeed >= settings.minimumHitStopSpeed && now >= nextHitStopTime;
+            if (!shake && !stop) return false;
             float strength = Mathf.InverseLerp(settings.minimumImpactSpeed,
                 Mathf.Max(settings.minimumImpactSpeed + 0.01f, settings.fullImpactSpeed), relativeSpeed);
-            nextFeedbackTime = now + Mathf.Max(0f, settings.feedbackCooldown);
             TriggerCount++;
 
-            if (settings.enableShake && settings.shakeSeconds > 0f)
+            if (shake)
             {
+                nextShakeTime = now + Mathf.Max(0f, settings.feedbackCooldown);
                 if (targetCamera == null) targetCamera = Camera.main;
                 if (targetCamera != null)
                 {
@@ -57,10 +75,14 @@ namespace TuanziArena
                     impactDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
                 }
             }
-            if (settings.enableHitStop && settings.hitStopSeconds > 0f)
+            if (stop)
             {
+                nextHitStopTime = now + Mathf.Max(0f, settings.feedbackCooldown);
                 previousTimeScale = Time.timeScale;
-                stopUntil = now + Mathf.Clamp(settings.hitStopSeconds, 0f, 0.12f);
+                float hitStrength = Mathf.InverseLerp(settings.minimumHitStopSpeed,
+                    Mathf.Max(settings.minimumHitStopSpeed + 0.01f, settings.fullImpactSpeed), relativeSpeed);
+                stopUntil = now + Mathf.Clamp(Mathf.Lerp(settings.hitStopSeconds,
+                    Mathf.Max(settings.hitStopSeconds, settings.maximumHitStopSeconds), hitStrength), 0f, 0.12f);
                 ownsHitStop = true;
                 Time.timeScale = 0f;
             }
@@ -106,6 +128,7 @@ namespace TuanziArena
             RestoreTime();
             RemoveCameraOffset();
             shakeRemaining = 0f;
+            visuals?.Clear();
         }
 
         private void OnDisable() => CancelFeedback();

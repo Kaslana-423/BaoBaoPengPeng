@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace TuanziArena
 {
-    // One point per opposing defeat during an action. Respawning starts another life,
-    // so several kills (including repeated kills of one actor) may score in one action.
+    // One point per opposing defeat. All defeated units return only after the action ends;
+    // later actions can score against their new lives.
     [DisallowMultipleComponent]
     public sealed class BattleScoreController : MonoBehaviour
     {

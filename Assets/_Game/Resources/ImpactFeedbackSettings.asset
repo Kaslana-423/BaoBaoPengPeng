@@ -15,7 +15,18 @@ MonoBehaviour:
   minimumImpactSpeed: 2
   fullImpactSpeed: 8
   enableHitStop: 1
+  minimumHitStopSpeed: 4
   hitStopSeconds: 0.045
+  maximumHitStopSeconds: 0.075
+  enableSpark: 1
+  enableWhiteFlash: 1
+  minimumVisualSpeed: 0.35
+  sparkLifetime: 0.18
+  minimumSparkSize: 0.8
+  maximumSparkSize: 1.55
+  sparkColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  whiteFlashSeconds: 0.09
+  whiteFlashIntensity: 1
   enableShake: 1
   shakeSeconds: 0.14
   minimumShakeDistance: 0.03
