@@ -11,6 +11,9 @@ namespace TuanziArena
         public Vector2 End;
         public bool HasBounce;
         public bool HitSecondObstacle;
+        // Set when the guide was cut short by a scene hazard instead of solid geometry.
+        public bool StoppedByHazard;
+        public Vector2 HazardDirection;
         public float Length => HasBounce
             ? Vector2.Distance(Start, Bounce) + Vector2.Distance(Bounce, End)
             : Vector2.Distance(Start, End);
@@ -35,18 +38,38 @@ namespace TuanziArena
             Vector3 scale = source.transform.lossyScale;
             float radius = source.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
             PhysicsScene2D scene = source.gameObject.scene.GetPhysicsScene2D();
+            int layerMask = obstacleLayers & Physics2D.GetLayerCollisionMask(source.gameObject.layer);
             ContactFilter2D filter = new ContactFilter2D { useTriggers = false };
-            filter.SetLayerMask(obstacleLayers & Physics2D.GetLayerCollisionMask(source.gameObject.layer));
+            filter.SetLayerMask(layerMask);
+            // Hazards are triggers, so they need a second pass with triggers enabled.
+            ContactFilter2D triggers = new ContactFilter2D { useTriggers = true };
+            triggers.SetLayerMask(layerMask);
 
             if (!FindHit(scene, source, origin, radius, direction, length, filter, out RaycastHit2D first, out Vector2 normal))
             {
                 path.End = origin + direction * length;
+                if (FindHazard(scene, source, origin, radius, direction, length, triggers,
+                    out Vector2 hazardPoint, out Vector2 hazardArrow))
+                {
+                    path.End = hazardPoint;
+                    path.StoppedByHazard = true;
+                    path.HazardDirection = hazardArrow;
+                }
                 return path;
             }
 
             float firstDistance = Mathf.Clamp(first.distance, 0f, length);
             path.Bounce = origin + direction * firstDistance;
             path.End = path.Bounce;
+            // A hazard before the first solid hit cuts the guide short; the preview draws an arrow there.
+            if (FindHazard(scene, source, origin, radius, direction, firstDistance, triggers,
+                out Vector2 shortPoint, out Vector2 shortArrow))
+            {
+                path.End = shortPoint;
+                path.StoppedByHazard = true;
+                path.HazardDirection = shortArrow;
+                return path;
+            }
             float remaining = length - firstDistance;
             if (remaining <= ContactTolerance) return path;
 
@@ -60,6 +83,14 @@ namespace TuanziArena
             // A slower shooter cannot cover the whole budget, so the preview shortens with the speed.
             float travel = remaining * Mathf.Clamp01(speedRatio);
             if (travel <= ContactTolerance) return path;
+            if (FindHazard(scene, source, path.Bounce, radius, outgoing, travel, triggers,
+                out Vector2 bouncePoint, out Vector2 bounceArrow))
+            {
+                path.End = bouncePoint;
+                path.StoppedByHazard = true;
+                path.HazardDirection = bounceArrow;
+                return path;
+            }
             // The struck body is skipped: it leaves faster than the shooter, so it cannot be hit twice.
             // Second cast only clips the outgoing leg. There is no second reflection.
             if (FindHit(scene, source, path.Bounce, radius, outgoing, travel, filter,
@@ -134,6 +165,37 @@ namespace TuanziArena
                 nearestDistance = hit.distance;
             }
             return nearest.collider != null;
+        }
+
+        // The solid cast never reports triggers, so hazards get their own pass along the same leg.
+        // Returns the first hazard the guide would enter and the direction it pushes toward.
+        private bool FindHazard(PhysicsScene2D scene, CircleCollider2D source, Vector2 origin, float radius,
+            Vector2 direction, float length, ContactFilter2D filter, out Vector2 point, out Vector2 indicator)
+        {
+            point = default;
+            indicator = default;
+            if (length <= ContactTolerance) return false;
+            hits.Clear();
+            scene.CircleCast(origin, radius, direction, length, filter, hits);
+            HazardZone nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            float nearestTravel = 0f;
+            foreach (RaycastHit2D hit in hits)
+            {
+                Collider2D obstacle = hit.collider;
+                // A cast that starts inside the zone means the unit is already in it; there is no entry.
+                if (obstacle == null || hit.distance <= ContactTolerance ||
+                    hit.distance >= nearestDistance || obstacle.transform.IsChildOf(source.transform)) continue;
+                HazardZone hazard = obstacle.GetComponentInParent<HazardZone>();
+                if (hazard == null) continue;
+                nearest = hazard;
+                nearestDistance = hit.distance;
+                nearestTravel = Mathf.Clamp(hit.distance, 0f, length);
+            }
+            if (nearest == null) return false;
+            point = origin + direction * nearestTravel;
+            indicator = nearest.SteerDirection(direction);
+            return true;
         }
     }
 }

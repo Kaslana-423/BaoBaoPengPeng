@@ -29,7 +29,7 @@ namespace TuanziArena
         public event System.Action<UnitActor, int> ActionStarted;
         public event System.Action ActionEnded;
 
-        private void Awake() { BindCombat(); BindRespawns(); BindFlow(); }
+        private void Awake() { BindCombat(); BindRespawns(); BindFlow(); BindHazards(); }
 
         public void Configure(UnitActor[] sceneUnits)
         {
@@ -37,6 +37,7 @@ namespace TuanziArena
             if (Application.isPlaying) BindCombat();
             BindRespawns();
             BindFlow();
+            BindHazards();
         }
 
         public void RegisterLaunchSettings(PlayerInputController source) => launchSettingsSource = source;
@@ -53,10 +54,15 @@ namespace TuanziArena
             quietTime = elapsed = 0f;
             if (units != null)
                 foreach (UnitActor unit in units)
-                    if (unit != null) unit.RespawnAtSpawn();
+                    if (unit != null)
+                    {
+                        unit.ClearRespawnHealth();
+                        unit.RespawnAtSpawn();
+                    }
             BindCombat();
             BindRespawns();
             BindFlow();
+            BindHazards();
         }
         public void SetAIDifficulty(int value)
         {
@@ -83,6 +89,15 @@ namespace TuanziArena
             if (damageSystem == null) damageSystem = GetComponent<CollisionDamageSystem>();
             if (damageSystem == null) damageSystem = gameObject.AddComponent<CollisionDamageSystem>();
             damageSystem.Configure(this, units);
+        }
+
+        // Scene hazards are found once and receive the session plus the damage router, so a hazard
+        // prefab never needs a manual reference back to the battle systems.
+        private void BindHazards()
+        {
+            HazardZone[] hazards = FindObjectsOfType<HazardZone>(true);
+            foreach (HazardZone hazard in hazards)
+                if (hazard != null) hazard.Bind(this);
         }
 
         public bool CanSelectUnit(UnitActor unit)

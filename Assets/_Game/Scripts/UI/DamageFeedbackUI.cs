@@ -63,6 +63,20 @@ namespace TuanziArena
             RefreshNumber(view, 0f);
         }
 
+        // Self-inflicted hazard damage: a floating number, but no participation in the action total.
+        public void ShowHazardHit(DamageHit hit)
+        {
+            if (settings == null) return;
+            ApplyStyle();
+            if (!settings.showFloatingNumbers) return;
+            while (active.Count >= Mathf.Max(1, settings.maximumNumbers)) Recycle(0);
+            DamageNumberView view = pool.Count > 0 ? pool.Pop() : Instantiate(numberPrefab, floatingLayer);
+            view.ShowHazard(hit, settings);
+            view.transform.SetAsLastSibling();
+            active.Add(view);
+            RefreshNumber(view, 0f);
+        }
+
         private void ApplyStyle()
         {
             if (settings == null || styleRevision == settings.Revision) return;
