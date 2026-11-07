@@ -21,6 +21,7 @@ namespace TuanziArena
             gameFlow != null && gameFlow.State == BattleState.PlayerSelect;
         public GameFlowController Flow => gameFlow;
         public RespawnController Respawns => respawnController;
+        public RelayController Relay { get; private set; }
         public float MaxBaseImpulse => launchSettingsSource != null ? launchSettingsSource.MaxBaseImpulse : 10f;
 
         public UnitActor ActiveShooter { get; private set; }
@@ -29,7 +30,7 @@ namespace TuanziArena
         public event System.Action<UnitActor, int> ActionStarted;
         public event System.Action ActionEnded;
 
-        private void Awake() { BindCombat(); BindRespawns(); BindFlow(); BindHazards(); }
+        private void Awake() { BindCombat(); BindRespawns(); BindFlow(); BindHazards(); BindRelay(); }
 
         public void Configure(UnitActor[] sceneUnits)
         {
@@ -38,6 +39,7 @@ namespace TuanziArena
             BindRespawns();
             BindFlow();
             BindHazards();
+            BindRelay();
         }
 
         public void RegisterLaunchSettings(PlayerInputController source) => launchSettingsSource = source;
@@ -45,6 +47,7 @@ namespace TuanziArena
         // Restart in place: works with the current scene even when it is not in Build Settings.
         public void RestartBattle()
         {
+            Relay?.Cancel();
             respawnController?.CancelPending();
             GetComponent<ImpactFeedback>()?.CancelFeedback();
             IsResolving = false;
@@ -63,6 +66,7 @@ namespace TuanziArena
             BindRespawns();
             BindFlow();
             BindHazards();
+            BindRelay();
         }
         public void SetAIDifficulty(int value)
         {
@@ -89,6 +93,14 @@ namespace TuanziArena
             if (damageSystem == null) damageSystem = GetComponent<CollisionDamageSystem>();
             if (damageSystem == null) damageSystem = gameObject.AddComponent<CollisionDamageSystem>();
             damageSystem.Configure(this, units);
+        }
+
+        private void BindRelay()
+        {
+            if (!Application.isPlaying) return;
+            if (Relay == null) Relay = GetComponent<RelayController>();
+            if (Relay == null) Relay = gameObject.AddComponent<RelayController>();
+            Relay.Configure(this);
         }
 
         // Scene hazards are found once and receive the session plus the damage router, so a hazard
@@ -132,6 +144,7 @@ namespace TuanziArena
         private void FixedUpdate()
         {
             if (!IsResolving) return;
+            if (Relay != null && Relay.IsBusy) { quietTime = 0f; return; }
             elapsed += Time.fixedDeltaTime;
             // Dead units stay absent until this action ends. Only the movie blocks settling.
             if (respawnController != null && respawnController.IsPresenting) { quietTime = 0f; return; }

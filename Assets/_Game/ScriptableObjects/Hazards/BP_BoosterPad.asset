@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: BP_BoosterPad
   m_EditorClassIdentifier: 
   displayName: Hazard
-  tint: {r: 0.22, g: 0.82, b: 1, a: 0.32}
+  tint: {r: 0.08443567, g: 0.6026788, b: 0.7584905, a: 0.32}
   affectPlayer: 1
   affectEnemy: 1
-  impulse: 6
+  guaranteedSpeed: 7
+  speedMultiplier: 1.2
+  addedSpeed: 2
   maximumSpeed: 22
+  steer: 0.701

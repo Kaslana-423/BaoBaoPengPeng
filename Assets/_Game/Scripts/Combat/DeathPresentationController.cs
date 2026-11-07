@@ -22,6 +22,8 @@ namespace TuanziArena
         public void BeginBatch()
         {
             if (ownsPause) return;
+            // Death has priority if another collision in the same physics step was lethal.
+            GetComponent<RelayController>()?.Cancel();
             if (settings == null) settings = Resources.Load<DeathPresentationSettings>("DeathPresentationSettings");
             if (settings == null)
             {

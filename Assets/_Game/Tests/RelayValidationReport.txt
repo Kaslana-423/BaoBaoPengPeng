@@ -1,0 +1,25 @@
+接力玩法验证 — 2026-11-06
+Unity 2022.3.50f1c1，当前战斗场景与资产的隔离副本。
+
+生成：RelaySettings.asset、PF_RelayUI.prefab。
+验证入口：TuanziArena.Editor.RelayChecks.RunBatch。
+
+已通过：
+- 实际 Rigidbody2D 碰撞，经 UnitCollisionReporter.OnCollisionEnter2D 触发接力。
+- 速度阈值、仅我方行动中的我方互撞、排除敌我/敌方/墙壁/选择阶段。
+- 真实时间 2 秒超时；暂停过程中位置和速度保持，超时消费一次额度并恢复时间。
+- 左右按碰撞 X 坐标排列；交换站位后映射反转；垂直接触正确包含两名角色。
+- 头像读取各自 UnitActor.HeadSprite，场景中两张不同头像实际渲染正确。
+- 两个鼠标选择分支（通过正式 TryChoose 输入接口）产生预期方向、大小的冲量，仅所选角色受力。
+- 过近鼠标方向无效；正常发射状态和 AI 不能绕过接力暂停。
+- 不改变 ActionId、六名角色的使用记录；第三次后拒绝第四次，换边/下一玩家行动不重置；完整六人行动后恢复三次。
+- 原有 UI 和新生成的 Canvas 均隐藏；已有 CanvasGroup 的透明度和交互状态、原本禁用的 Canvas 状态恢复。
+- 进度条持续缩短经过一半；运行截图人工检查无其它 HUD 残留，头像、文字、倒计时与箭头可见。
+- 已有碰撞时停移交到接力，死亡特写优先接管；自定义 0.5 时间倍率正确恢复。
+- 接力期间重开，额度、UI 与时间恢复；超时后没有遗留操作重新暂停/恢复游戏。
+- 既有 TurnAndAIChecks、CombatChecks、ScoreRulesChecks 通过。
+
+通过标记：TUANZI_RELAY_CHECKS_PASSED / TUANZI_RELAY_PLAY_PASSED。
+最终运行无 C# 编译错误、组件重复添加错误、运行时异常或断言失败。
+截图：RelayPreview.png（1280×720）。
+本次未修改用户的战斗场景、角色预制体、HeadSprite 配置或加速板配置。

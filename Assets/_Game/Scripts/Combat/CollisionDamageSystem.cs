@@ -54,6 +54,8 @@ namespace TuanziArena
 
         public void ReportImpact(UnitActor unit, UnitActor other, float relativeSpeed, Vector2 direction, Vector2 point)
         {
+            // Enter is reported by only one actor per pair. Stay never triggers another relay.
+            if (session != null && session.Relay != null && session.Relay.TryQueueCollision(unit, other, relativeSpeed)) return;
             if (session != null && session.IsResolving && unit != null && unit.IsAlive && impactFeedback != null &&
                 (session.Flow == null || session.Flow.Score == null || !session.Flow.Score.Winner.HasValue))
                 impactFeedback.PlayCollision(unit, other, relativeSpeed, direction, point);

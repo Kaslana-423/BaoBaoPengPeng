@@ -414,6 +414,7 @@ MonoBehaviour:
   team: 0
   visual: {fileID: 6085678732543098354}
   selectionIndicator: {fileID: 4374969167259748685}
+  HeadSprite: {fileID: 0}
   currentHealth: 65
 --- !u!114 &103801061775682809
 MonoBehaviour:
@@ -444,6 +445,7 @@ MonoBehaviour:
   attackText: {fileID: 3290475367555085937}
   healthText: {fileID: 1424127807853663047}
   localOffset: {x: 0, y: -0.65}
+  actionRing: {fileID: 0}
 --- !u!1 &5917946164152677549
 GameObject:
   m_ObjectHideFlags: 0
@@ -914,7 +916,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.88, y: 0.88, z: 0.88}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7766848215782133035}
   - {fileID: 4809834693853650160}
@@ -961,8 +963,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 21300000, guid: a313d8b79495f004ab77bb903fd2ff45, type: 3}
-  m_Color: {r: 0.29, g: 0.83, b: 0.76, a: 1}
+  m_Sprite: {fileID: 117392124, guid: 3a2af77d51258cb42942b5d1b1017108, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

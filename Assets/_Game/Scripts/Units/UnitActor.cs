@@ -14,6 +14,8 @@ namespace TuanziArena
         [SerializeField] private SpriteRenderer visual;
         [SerializeField] private SpriteRenderer selectionIndicator;
 
+        [SerializeField] public Sprite HeadSprite;
+
         private Rigidbody2D body;
         [SerializeField, Tooltip("Runtime health. Reset from UnitData when a battle starts.")]
         private int currentHealth;
